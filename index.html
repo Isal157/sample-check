@@ -6,10 +6,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://unpkg.com/cesium/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
   <script src="https://unpkg.com/cesium/Build/Cesium/Cesium.js"></script>
-  <style>html,body,#cesium{width:100%;height:100%;margin:0;padding:0}</style>
+  <style>
+    html,body,#cesium{width:100%;height:100%;margin:0;padding:0}
+
+    /* Legend styles */
+    .legend{
+      position:absolute; top:8px; left:8px; z-index:9999;
+      background:rgba(0,0,0,.55); color:#fff;
+      padding:8px 10px; border-radius:8px;
+      font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      font-size:14px; line-height:1.3;
+    }
+    .legend .dot{
+      display:inline-block; width:10px; height:10px; border-radius:50%;
+      margin-right:6px; vertical-align:middle;
+    }
+  </style>
 </head>
 <body>
-<div id="cesium"></div>
+  <div id="cesium"></div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div><strong>Lilydale → Warburton Rail Trail</strong></div>
+    <div style="margin-top:6px">
+      <span class="dot" style="background:#808080"></span>Car park&nbsp;&nbsp;
+      <span class="dot" style="background:#1E90FF"></span>Toilet&nbsp;&nbsp;
+      <span class="dot" style="background:#2E8B57"></span>Picnic tables&nbsp;&nbsp;
+      <span class="dot" style="background:#DAA520"></span>Lookout&nbsp;&nbsp;
+      <span class="dot" style="background:#FF6347"></span>Other
+    </div>
+  </div>
 <script>
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxODk5M2M4NC0zYWE0LTQ0ZGUtYjcyNC04OTJmZWIzODQ4YjQiLCJpZCI6MzM2Njc0LCJpYXQiOjE3NTY1MjE4NzB9.QEYIT5By0JNCE6uneQcAqpwml-GaD4jkn1S9rXa7O3o';
 
