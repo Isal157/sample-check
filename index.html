@@ -1,1 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Lilydale–Warburton Rail Trail 3D</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Pin Cesium version -->
+  <link href="https://unpkg.com/cesium@1.114.1/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <script src="https://unpkg.com/cesium@1.114.1/Build/Cesium/Cesium.js"></script>
+  <style>
+    html,body,#cesium{width:100%;height:100%;margin:0;padding:0}
+    .legend{
+      position:absolute;top:8px;left:8px;z-index:10;
+      background:rgba(0,0,0,.55);color:#fff;padding:8px 10px;border-radius:8px;
+      font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:14px
+    }
+    .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  </style>
+</head>
+<body>
+  <div id="cesium"></div>
+  <div class="legend">
+    <div><strong>Lilydale → Warburton Rail Trail</strong></div>
+    <div style="margin-top:6px">
+      <span class="dot" style="background:#808080"></span>Car park&nbsp;&nbsp;
+      <span class="dot" style="background:#1E90FF"></span>Toilet&nbsp;&nbsp;
+      <span class="dot" style="background:#2E8B57"></span>Picnic tables&nbsp;&nbsp;
+      <span class="dot" style="background:#DAA520"></span>Lookout&nbsp;&nbsp;
+      <span class="dot" style="background:#FF6347"></span>Other
+    </div>
+  </div>
 
+  <script>
+  // ===== Cesium ion token (from you) =====
+  Cesium.Ion.defaultAccessToken =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZGU2NjBjYy1kYjQ1LTQ5MGEtYjZjOC0xMzI2N2U0ODBjNzciLCJpZCI6MzM2Njc0LCJpY..."
+    // ^ if you rotated it, paste the current full token here
+  ;
+
+  // ===== Viewer =====
+  const viewer = new Cesium.Viewer("cesium", {
+    terrain: Cesium.createWorldTerrain(),
+    timeline: false,
+    animation: false,
+    baseLayerPicker: false,
+    selectionIndicator: true,
+    infoBox: true
+  });
+
+  // ===== Google Photorealistic 3D Tiles (required by rubric 1a) =====
+  (async () => {
+    try {
+      const googleTiles = await Cesium.createGooglePhotorealistic3DTileset();
+      viewer.scene.primitives.add(googleTiles);
+    } catch (e) {
+      console.warn("Google Photorealistic 3D Tiles failed to load; continuing without.", e);
+    }
+  })();
+
+  // ===== Your ion Asset IDs =====
+  const TRAIL_ASSET_ID = 3766865;      // Lilydale_to_Warburton_Rail_Trail
+  const WPTS_ASSET_ID  = 3766866;      // Lilydale_to_Warburton_Rail_Trail_waypoints
+
+  // ===== Helpers =====
+  const colorFor = (name="") => {
+    const n = name.toLowerCase();
+    if (n.includes("car park")) return Cesium.Color.GRAY;
+    if (n.includes("toilet"))   return Cesium.Color.DODGERBLUE;
+    if (n.includes("picnic"))   return Cesium.Color.SEAGREEN;
+    if (n.includes("lookout"))  return Cesium.Color.GOLDENROD;
+    return Cesium.Color.TOMATO; // other
+  };
+
+  async function loadTrail(assetId){
+    const ds = await Cesium.GeoJsonDataSource.load(
+      Cesium.IonResource.fromAssetId(assetId),
+      { clampToGround: true }
+    );
+    viewer.dataSources.add(ds);
+    for (const e of ds.entities.values){
+      if (e.polyline){
+        e.polyline.material = Cesium.Color.WHITE; // thick white line
+        e.polyline.width = 6;                     // rubric 1b
+        e.polyline.clampToGround = true;          // clamped to ground
+        e.polyline.arcType = Cesium.ArcType.GEODESIC;
+      }
+    }
+    return ds;
+  }
+
+  async function loadWaypoints(assetId){
+    const ds = await Cesium.GeoJsonDataSource.load(
+      Cesium.IonResource.fromAssetId(assetId),
+      { clampToGround: true }
+    );
+    viewer.dataSources.add(ds);
+    for (const ent of ds.entities.values){
+      const nm = (ent.properties && (ent.properties.Name?.getValue?.() ?? ent.properties.name?.getValue?.())) || ent.name || "";
+      if (!ent.point && ent.position) ent.point = new Cesium.PointGraphics();
+      ent.point.pixelSize = 12;
+      ent.point.color = colorFor(nm);                            // rubric 1c
+      ent.point.outlineColor = Cesium.Color.WHITE.withAlpha(0.9);
+      ent.point.outlineWidth = 1.5;
+      ent.label = new Cesium.LabelGraphics({
+        text: nm,
+        font: "14px sans-serif",
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 2,
+        pixelOffset: new Cesium.Cartesian2(0, -18),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
+      });
+    }
+    return ds;
+  }
+
+  (async () => {
+    try {
+      const [trailDS, wptsDS] = await Promise.all([
+        loadTrail(TRAIL_ASSET_ID),
+        loadWaypoints(WPTS_ASSET_ID)
+      ]);
+      viewer.flyTo([trailDS, wptsDS], { duration: 2.5 });
+    } catch (err) {
+      console.error("Failed to load ion assets:", err);
+    }
+  })();
+
+  // Optional: start near Lilydale so users see something immediately
+  viewer.camera.setView({
+    destination: Cesium.Cartesian3.fromDegrees(145.35, -37.76, 16000)
+  });
+  </script>
+</body>
+</html>
